@@ -1,5 +1,8 @@
 from __future__ import division
 from __future__ import absolute_import
+import sys
+if sys.version > '3':
+    buffer = memoryview
 
 __license__ = """
 Copyright 2012 DISQUS

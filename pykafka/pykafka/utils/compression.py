@@ -18,7 +18,10 @@ limitations under the License.
 import gzip
 import logging
 
-from cStringIO import StringIO
+try:
+    from StringIO import StringIO
+except ImportError:
+    from io import BytesIO as StringIO
 
 try:
     import snappy

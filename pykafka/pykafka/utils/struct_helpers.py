@@ -82,7 +82,14 @@ def _unpack(fmt, buff, offset, count=1):
                 ch = '%ds' % len_
             items.extend(struct.unpack_from('!'+ch, buff, offset))
             offset += struct.calcsize(ch)
-    return tuple(items),offset
+    converted = []
+    for item in items:
+        try:
+            conv = item.decode('utf-8')
+        except:
+            conv = item
+        converted.append(conv)
+    return tuple(converted),offset
 
 def _unpack_array(fmt, buff, offset, count):
     """Unpack an array of items"""

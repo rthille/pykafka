@@ -63,7 +63,8 @@ logger = logging.getLogger(__name__)
 class Request(Serializable):
     """Base class for all Requests. Handles writing header information"""
     HEADER_LEN = 21  # constant for all messages
-    CLIENT_ID = 'pykafka'
+    CLIENT_ID = b'pykafka'
+    str_encoding = 'ascii'
 
     def _write_header(self, buff, api_version=1, correlation_id=0):
         """Write the header for an outgoing message"""
@@ -593,7 +594,9 @@ class FetchRequest(Request):
         offset += 16
         for topic_name, partitions in six.iteritems(self._reqs):
             fmt = '!h%dsi' % len(topic_name)
-            struct.pack_into(fmt, output, offset, len(topic_name), topic_name, len(partitions))
+            struct.pack_into(fmt, output, offset, len(topic_name),
+                             bytes(topic_name, self.str_encoding),
+                             len(partitions))
             offset += struct.calcsize(fmt)
             for partition_id, (fetch_offset, max_bytes) in six.iteritems(partitions):
                 struct.pack_into('!iqi', output, offset,
@@ -793,7 +796,7 @@ class ConsumerMetadataRequest(Request):
         self._write_header(output)
         cglen = len(self.consumer_group)
         struct.pack_into('!h%ds' % cglen, output, self.HEADER_LEN + 4, cglen,
-                         self.consumer_group)
+                         bytes(self.consumer_group, self.str_encoding))
         return output
 
 
@@ -906,15 +909,15 @@ class OffsetCommitRequest(Request):
         offset = self.HEADER_LEN
         fmt = '!h%dsih%dsi' % (len(self.consumer_group), len(self.consumer_id))
         struct.pack_into(fmt, output, offset,
-                         len(self.consumer_group), self.consumer_group,
+                         len(self.consumer_group), bytes(self.consumer_group, self.str_encoding),
                          self.consumer_group_generation_id,
-                         len(self.consumer_id), self.consumer_id,
+                         len(self.consumer_id), bytes(self.consumer_id, self.str_encoding),
                          len(self._reqs))
         offset += struct.calcsize(fmt)
         for topic_name, partitions in six.iteritems(self._reqs):
             fmt = '!h%dsi' % len(topic_name)
             struct.pack_into(fmt, output, offset, len(topic_name),
-                             topic_name, len(partitions))
+                             bytes(topic_name, self.str_encoding), len(partitions))
             offset += struct.calcsize(fmt)
             for pnum, (poffset, timestamp, metadata) in six.iteritems(partitions):
                 fmt = '!iqq'
@@ -926,7 +929,7 @@ class OffsetCommitRequest(Request):
                 pack_args = [fmt, output, offset, metalen]
                 if metalen != -1:
                     fmt += '%ds' % metalen
-                    pack_args = [fmt, output, offset, metalen, metadata]
+                    pack_args = [fmt, output, offset, metalen, bytes(metadata, self.str_encoding)]
                 struct.pack_into(*pack_args)
                 offset += struct.calcsize(fmt)
         return output
@@ -1024,13 +1027,14 @@ class OffsetFetchRequest(Request):
         offset = self.HEADER_LEN
         fmt = '!h%dsi' % len(self.consumer_group)
         struct.pack_into(fmt, output, offset,
-                         len(self.consumer_group), self.consumer_group,
+                         len(self.consumer_group), bytes(self.consumer_group, self.str_encoding),
                          len(self._reqs))
         offset += struct.calcsize(fmt)
         for topic_name, partitions in six.iteritems(self._reqs):
             fmt = '!h%dsi' % len(topic_name)
             struct.pack_into(fmt, output, offset, len(topic_name),
-                             topic_name, len(partitions))
+                             bytes(topic_name, self.str_encoding),
+                             len(partitions))
             offset += struct.calcsize(fmt)
             for pnum in partitions:
                 fmt = '!i'
