@@ -1,8 +1,10 @@
+from __future__ import absolute_import
 from collections import namedtuple
 from copy import copy
 import logging
 
 from pykafka import base
+import six
 
 try:
     import rd_kafka
@@ -21,7 +23,7 @@ Message = namedtuple("Message", ["topic", "payload", "key", "offset"])
 class SimpleConsumer(base.BaseSimpleConsumer):
 
     def __init__(self, client, topic, partitions=None):
-        if isinstance(topic, basestring):
+        if isinstance(topic, six.string_types):
             topic = client[topic]
         self._topic = topic
         self._partitions = partitions or self.topic.partitions # ie all

@@ -1,9 +1,10 @@
+from __future__ import absolute_import
 import functools
 import itertools
 from collections import defaultdict
 import time
 import logging as log
-from Queue import Queue, Empty
+from six.moves.queue import Queue, Empty
 import weakref
 import threading
 
@@ -16,6 +17,8 @@ from pykafka.exceptions import (OffsetOutOfRangeError, UnknownTopicOrPartition,
 from .utils.error_handlers import handle_partition_responses, raise_error
 from .protocol import (PartitionFetchRequest, PartitionOffsetCommitRequest,
                        PartitionOffsetFetchRequest, PartitionOffsetRequest)
+import six
+from six.moves import range
 
 
 class SimpleConsumer(base.BaseSimpleConsumer):
@@ -123,14 +126,14 @@ class SimpleConsumer(base.BaseSimpleConsumer):
                                 for p in partitions}
         else:
             self._partitions = {owned_partition_partial(p): topic.partitions[k]
-                                for k, p in topic.partitions.iteritems()}
+                                for k, p in six.iteritems(topic.partitions)}
         self._partitions_by_id = {p.partition.id: p
-                                  for p in self._partitions.iterkeys()}
+                                  for p in six.iterkeys(self._partitions)}
         # Organize partitions by leader for efficient queries
         self._partitions_by_leader = defaultdict(list)
-        for p in self._partitions.iterkeys():
+        for p in six.iterkeys(self._partitions):
             self._partitions_by_leader[p.partition.leader].append(p)
-        self.partition_cycle = itertools.cycle(self._partitions.keys())
+        self.partition_cycle = itertools.cycle(list(self._partitions.keys()))
 
         self._default_error_handlers = self._build_default_error_handlers()
 
@@ -191,7 +194,7 @@ class SimpleConsumer(base.BaseSimpleConsumer):
                     break
                 self.fetch()
         return [self._cluster.handler.spawn(fetcher)
-                for i in xrange(self._num_consumer_fetchers)]
+                for i in range(self._num_consumer_fetchers)]
 
     def __iter__(self):
         while True:
@@ -211,7 +214,7 @@ class SimpleConsumer(base.BaseSimpleConsumer):
 
         :param timeout: Seconds to wait before returning None
         """
-        owned_partition = self.partition_cycle.next()
+        owned_partition = next(self.partition_cycle)
         message = owned_partition.consume()
 
         if message:
@@ -236,9 +239,9 @@ class SimpleConsumer(base.BaseSimpleConsumer):
         if not self._consumer_group:
             raise Exception("consumer group must be specified to commit offsets")
 
-        reqs = [p.build_offset_commit_request() for p in self._partitions.keys()]
+        reqs = [p.build_offset_commit_request() for p in list(self._partitions.keys())]
         log.info("Committing offsets for %d partitions", len(reqs))
-        for i in xrange(self._offsets_commit_max_retries):
+        for i in range(self._offsets_commit_max_retries):
             if i > 0:
                 log.debug("Retrying")
             time.sleep(i * (self._offsets_channel_backoff_ms / 1000))
@@ -273,7 +276,14 @@ class SimpleConsumer(base.BaseSimpleConsumer):
 
         log.info("Fetching offsets")
 
-        reqs = [p.build_offset_fetch_request() for p in self._partitions.keys()]
+        reqs = [p.build_offset_fetch_request() for p in list(self._partitions.keys())]
+        res = self._offset_manager.fetch_consumer_group_offsets(self._consumer_group, reqs)
+        parts_by_error = self._filter_partition_responses(res)
+        error_handlers = {0: lambda op, pres: op.set_offset(pres.offset)}
+        self._handle_partition_errors(parts_by_error, error_handlers)
+        self._reset_offsets(
+            [a[0] for a in
+             parts_by_error[OffsetOutOfRangeError.ERROR_CODE]])
 
         for i in xrange(self._offsets_fetch_max_retries):
             if i > 0:
@@ -294,6 +304,20 @@ class SimpleConsumer(base.BaseSimpleConsumer):
             reqs = [p.build_offset_fetch_request()
                     for p in parts_by_error.get(OffsetsLoadInProgress.ERROR_CODE, [])]
 
+    def _handle_partition_errors(self, parts_by_error, handlers):
+        """Call the appropriate handler for each errored partition
+
+        :param parts_by_error: partition responses grouped by error code
+            (output of self._filter_partition_responses)
+        :type parts_by_error: dict {int: iterable}
+        :param handlers: mapping of error code to handler
+        :type handlers: dict {int: callable(owned_partition, partition_response)}
+        """
+        for errcode, parts in six.iteritems(parts_by_error):
+            for owned_partition, pres in parts:
+                if errcode in handlers:
+                    handlers[errcode](owned_partition, pres)
+
     def _reset_offsets(self, errored_partitions):
         """Reset offsets after an OffsetOutOfRangeError
 
@@ -313,7 +337,7 @@ class SimpleConsumer(base.BaseSimpleConsumer):
             by_leader[p.partition.leader].append(p)
 
         # get valid offset ranges for each partition
-        for broker, owned_partitions in by_leader.iteritems():
+        for broker, owned_partitions in six.iteritems(by_leader):
             reqs = [owned_partition.build_offset_request(self._auto_offset_reset)
                     for owned_partition in owned_partitions]
             response = broker.request_offset_limits(reqs)
@@ -333,7 +357,7 @@ class SimpleConsumer(base.BaseSimpleConsumer):
             for owned_partition, pres in parts:
                 owned_partition.enqueue_messages(pres.messages)
 
-        for broker, owned_partitions in self._partitions_by_leader.iteritems():
+        for broker, owned_partitions in six.iteritems(self._partitions_by_leader):
             partition_reqs = []
             for owned_partition in owned_partitions:
                 # attempt to acquire lock, just pass if we can't

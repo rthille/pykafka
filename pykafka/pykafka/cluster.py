@@ -1,8 +1,10 @@
 from __future__ import division
+from __future__ import absolute_import
 
 import logging
 import time
 import random
+import six
 
 from .broker import Broker
 from .topic import Topic
@@ -48,7 +50,7 @@ class Cluster(object):
     def _get_metadata(self):
         """Get fresh cluster metadata from a broker"""
         # Works either on existing brokers or seed_hosts list
-        brokers = [b for b in self.brokers.values() if b.connected]
+        brokers = [b for b in list(self.brokers.values()) if b.connected]
         if brokers:
             for broker in brokers:
                 response = broker.request_metadata()
@@ -86,7 +88,7 @@ class Cluster(object):
             logger.info('Removing broker %s', self._brokers[id_])
             self._brokers.pop(id_)
         # Add/update current brokers
-        for id_, meta in broker_metadata.iteritems():
+        for id_, meta in six.iteritems(broker_metadata):
             if id_ not in self._brokers:
                 logger.info('Discovered broker %s:%s', meta.host, meta.port)
                 self._brokers[id_] = Broker.from_metadata(
@@ -116,7 +118,7 @@ class Cluster(object):
             logger.info('Removing topic %s', self._topics[name])
             self._topics.pop(name)
         # Add/update partition information
-        for name, meta in metadata.iteritems():
+        for name, meta in six.iteritems(metadata):
             if not self._should_exclude_topic(name):
                 if name not in self._topics:
                     self._topics[name] = Topic(self, meta)
@@ -141,7 +143,7 @@ class Cluster(object):
         :type consumer_group: str
         """
         # arbitrarily choose a broker, since this request can go to any
-        broker = self.brokers[random.choice(self.brokers.keys())]
+        broker = self.brokers[random.choice(list(self.brokers.keys()))]
         MAX_RETRIES = 3
 
         for i in xrange(MAX_RETRIES):

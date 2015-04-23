@@ -1,3 +1,4 @@
+from __future__ import absolute_import
 from copy import copy
 import logging
 from time import clock
@@ -61,7 +62,7 @@ class Producer(base.BaseProducer):
 
         for msg in messages:
             key, msg = (None, msg) if isinstance(msg, bytes) else msg
-            par = self.partitioner(self.topic.partitions.keys(), key)
+            par = self.partitioner(list(self.topic.partitions.keys()), key)
             delivery_reports.append([])
             self.rdk_topic.produce(msg,
                                    partition=par,

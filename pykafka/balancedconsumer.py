@@ -1,4 +1,5 @@
 from __future__ import division
+from __future__ import absolute_import
 import itertools
 import logging as log
 import socket
@@ -13,6 +14,7 @@ from kazoo.recipe.watchers import ChildrenWatch
 from .common import OffsetType
 from .pykafka.simpleconsumer import SimpleConsumer
 from .exceptions import KafkaException
+from six.moves import range
 
 
 class BalancedConsumer():
@@ -204,7 +206,7 @@ class BalancedConsumer():
         """
         # Freeze and sort partitions so we always have the same results
         p_to_str = lambda p: '-'.join([p.topic.name, str(p.leader.id), str(p.id)])
-        all_partitions = self._topic.partitions.values()
+        all_partitions = list(self._topic.partitions.values())
         all_partitions.sort(key=p_to_str)
 
         # get start point, # of partitions, and remainder
@@ -309,7 +311,7 @@ class BalancedConsumer():
             self._consumer_id, self._topic.name)
         )
 
-        for i in xrange(self._rebalance_max_retries):
+        for i in range(self._rebalance_max_retries):
             participants = self._get_participants()
             new_partitions = self._decide_partitions(participants)
 

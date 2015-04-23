@@ -1,3 +1,4 @@
+from __future__ import absolute_import
 import logging
 
 from pykafka import base
@@ -31,7 +32,7 @@ class Cluster(base.BaseCluster):
 
         self._refresh_no_clobber(self.brokers, self.meta["brokers"], Broker)
         self._refresh_no_clobber(self.topics, self.meta["topics"], Topic)
-        for topic in self.topics.values():
+        for topic in list(self.topics.values()):
             self._refresh_no_clobber(
                     topic.partitions,
                     self.meta["topics"][topic.name]["partitions"],

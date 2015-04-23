@@ -1,3 +1,5 @@
+from __future__ import absolute_import
+from six.moves import range
 __license__ = """
 Copyright 2014 Parse.ly, Inc.
 
@@ -85,7 +87,7 @@ def _unpack(fmt, buff, offset, count=1):
 def _unpack_array(fmt, buff, offset, count):
     """Unpack an array of items"""
     output = []
-    for i in xrange(count):
+    for i in range(count):
         item,offset = _unpack(fmt, buff, offset)
         output.append(item)
     if len(fmt) == 1:

@@ -1,3 +1,5 @@
+from __future__ import absolute_import
+from six.moves import range
 __license__ = """
 Copyright 2012 DISQUS
 
@@ -50,7 +52,7 @@ class TestCase(unittest2.TestCase):
         if logger is None:
             logger = get_logger_for_function(fn)
 
-        for attempt in xrange(1, attempts + 1):
+        for attempt in range(1, attempts + 1):
             logger.debug('Starting attempt %s for %s...', attempt, fn)
             try:
                 fn()

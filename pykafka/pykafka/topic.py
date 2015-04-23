@@ -1,3 +1,4 @@
+from __future__ import absolute_import
 # TODO: Check all __repr__
 # TODO: __slots__ where appropriate
 # TODO: Use weak refs to avoid reference cycles?
@@ -13,6 +14,7 @@ from .partition import Partition
 from .producer import Producer
 from .protocol import PartitionOffsetRequest
 from .simpleconsumer import SimpleConsumer
+import six
 
 
 logger = logging.getLogger()
@@ -54,12 +56,12 @@ class Topic(base.BaseTopic):
         :type max_offsets: int
         """
         requests = defaultdict(list)  # one request for each broker
-        for part in self.partitions.itervalues():
+        for part in six.itervalues(self.partitions):
             requests[part.leader].append(PartitionOffsetRequest(
                 self.name, part.id, offsets_before, max_offsets
             ))
         output = {}
-        for broker, reqs in requests.iteritems():
+        for broker, reqs in six.iteritems(requests):
             res = broker.request_offsets(reqs)
             output.update(res.topics[self.name])
         return output
@@ -88,7 +90,7 @@ class Topic(base.BaseTopic):
 
         # Add/update current partitions
         brokers = self._cluster.brokers
-        for id_, meta in p_metas.iteritems():
+        for id_, meta in six.iteritems(p_metas):
             if meta.id not in self._partitions:
                 logger.info('Adding partition %s/%s', self.name, meta.id)
                 self._partitions[meta.id] = Partition(

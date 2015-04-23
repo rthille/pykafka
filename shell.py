@@ -13,6 +13,7 @@ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 See the License for the specific language governing permissions and
 limitations under the License.
 """
+from __future__ import absolute_import
 
 #!/usr/bin/env python
 import code
@@ -22,6 +23,7 @@ from optparse import OptionParser
 from kazoo.client import KazooClient
 
 from kafka.cluster import Cluster
+import six
 
 parser = OptionParser()
 parser.add_option('--zookeeper', help='zookeeper hosts', default=None)
@@ -50,6 +52,6 @@ exposed = {
 banner = """---
 Welcome to PyKafka! We've provided some local variables for you:
 %s
----""" % '\n'.join('> %s: %s' % (key, repr(value)) for key, value in exposed.iteritems())
+---""" % '\n'.join('> %s: %s' % (key, repr(value)) for key, value in six.iteritems(exposed))
 
 code.interact(banner, local=exposed)

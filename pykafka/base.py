@@ -1,5 +1,6 @@
-from common import CompressionType
-from partitioners import random_partitioner
+from __future__ import absolute_import
+from .common import CompressionType
+from .partitioners import random_partitioner
 
 
 class BaseCluster(object):

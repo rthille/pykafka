@@ -1,3 +1,4 @@
+from __future__ import absolute_import
 __license__ = """
 Copyright 2012 DISQUS
 
@@ -16,7 +17,7 @@ limitations under the License.
 
 import atexit
 import threading
-import Queue
+import six.moves.queue
 
 from collections import namedtuple
 
@@ -60,8 +61,8 @@ class Handler(object):
 
 
 class ThreadingHandler(Handler):
-    QueueEmptyError = Queue.Empty
-    Queue = Queue.Queue
+    QueueEmptyError = six.moves.queue.Empty
+    Queue = six.moves.queue.Queue
     Event = threading.Event
 
     def get_semaphore(self, count=0):
@@ -118,7 +119,7 @@ class RequestHandler(object):
                     if task.future:
                         res = self.connection.response()
                         task.future.set_response(res)
-                except Exception, e:
+                except Exception as e:
                     if task.future:
                         task.future.set_error(e)
                 finally:

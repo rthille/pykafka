@@ -1,3 +1,4 @@
+from __future__ import absolute_import
 __license__ = """
 Copyright 2014 Parse.ly, Inc.
 

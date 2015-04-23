@@ -1,3 +1,7 @@
+from __future__ import absolute_import
+import six
+from six.moves import range
+from functools import reduce
 __license__ = """
 Copyright 2012 DISQUS
 Copyright 2013 Parse.ly, Inc.
@@ -48,7 +52,7 @@ def is_port_available(port):
         s = socket.create_connection(('localhost', port))
         s.close()
         return False
-    except IOError, err:
+    except IOError as err:
         return err.errno == errno.ECONNREFUSED
 
 
@@ -71,7 +75,7 @@ def polling_timeout(predicate, duration, interval=0.1,
     non-False value, or the timeout is exceeded in which case a `TimeoutError`
     is raised.
     """
-    for _ in xrange(0, int(duration / interval)):
+    for _ in range(0, int(duration / interval)):
         if predicate():
             return
         time.sleep(interval)
@@ -85,7 +89,7 @@ def write_property_file(properties):
     by Kafka.
     """
     file = tempfile.NamedTemporaryFile(delete=False)
-    for item in properties.iteritems():
+    for item in six.iteritems(properties):
         file.write('%s=%s\n' % item)
     file.close()
     return file
@@ -220,7 +224,7 @@ class ManagedBroker(ExternalClassRunner):
 
         super(ManagedBroker, self).start()
 
-        for _ in xrange(0, timeout):
+        for _ in range(0, timeout):
             if ready.is_set():
                 break
             ready.wait(1)

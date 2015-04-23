@@ -1,13 +1,15 @@
+from __future__ import absolute_import
 import mock
 import unittest2
 from uuid import uuid4
 
 from pykafka.balancedconsumer import BalancedConsumer
+from six.moves import range
 
 
 class TestBalancedConsumer(unittest2.TestCase):
     def test_decide_partitions(self):
-        for i in xrange(100):
+        for i in range(100):
             num_participants = i + 1
             num_partitions = 100 - i
             consumer_group = 'testgroup'
@@ -16,7 +18,7 @@ class TestBalancedConsumer(unittest2.TestCase):
             topic.name = 'testtopic'
 
             topic.partitions = {}
-            for k in xrange(num_partitions):
+            for k in range(num_partitions):
                 part = mock.Mock()
                 part.id = k
                 part.topic = topic
@@ -30,7 +32,7 @@ class TestBalancedConsumer(unittest2.TestCase):
                                    zookeeper=zk, auto_start=False)
 
             participants = ['test-debian:{}'.format(uuid4())
-                            for i in xrange(num_participants - 1)]
+                            for i in range(num_participants - 1)]
             participants.append(cns._consumer_id)
             participants.sort()
             partitions = cns._decide_partitions(participants)

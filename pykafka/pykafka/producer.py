@@ -1,4 +1,5 @@
 from __future__ import division
+from __future__ import absolute_import
 
 import itertools
 import time
@@ -14,6 +15,7 @@ from pykafka.exceptions import (
 )
 from pykafka.partitioners import random_partitioner
 from .protocol import Message, ProduceRequest
+import six
 
 
 logger = logging.getLogger(__name__)
@@ -144,9 +146,9 @@ class Producer(base.BaseProducer):
         :param messages: Iterable of messages to publish.
         :returns:        Generator of ((key, value), partition_id)
         """
-        partitions = self._topic.partitions.values()
+        partitions = list(self._topic.partitions.values())
         for message in messages:
-            if isinstance(message, basestring):
+            if isinstance(message, six.string_types):
                 key = None
                 value = message
             else:
@@ -181,7 +183,7 @@ class Producer(base.BaseProducer):
                                    attempt)
 
         # Send any still not sent
-        for leader, req in requests.iteritems():
+        for broker, req in six.iteritems(requests):
             self._send_request(leader, req, attempt)
 
     def produce(self, messages):

@@ -1,3 +1,5 @@
+from __future__ import absolute_import
+from six.moves import map
 __license__ = """
 Copyright 2012 DISQUS
 
@@ -27,7 +29,7 @@ def methodmap(name, values, *args, **kwargs):
     ['hello', 'world']
     """
     fn = methodcaller(name, *args, **kwargs)
-    return map(fn, values)
+    return list(map(fn, values))
 
 
 def methodimap(name, values, *args, **kwargs):

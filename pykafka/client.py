@@ -1,3 +1,4 @@
+from __future__ import absolute_import
 __license__ = """
 Copyright 2012 DISQUS
 Copyright 2013,2014 Parse.ly, Inc.
@@ -17,8 +18,8 @@ limitations under the License.
 
 import logging
 
-import pykafka
-from pykafka import handlers
+from . import pykafka
+from .pykafka import handlers
 
 try:
     import rd_kafka
