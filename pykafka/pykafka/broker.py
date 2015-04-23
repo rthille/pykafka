@@ -13,6 +13,8 @@ from .protocol import (
     ProduceResponse
 )
 from pykafka.exceptions import LeaderNotAvailable
+import six
+from six.moves import range
 
 
 logger = logging.getLogger(__name__)
@@ -163,7 +165,7 @@ class Broker(base.BaseBroker):
 
     def request_metadata(self, topics=None):
         max_retries = 3
-        for i in xrange(max_retries):
+        for i in range(max_retries):
             if i > 0:
                 logger.debug("Retrying")
             time.sleep(i)
@@ -172,11 +174,11 @@ class Broker(base.BaseBroker):
             response = future.get(MetadataResponse)
 
             errored = False
-            for name, topic_metadata in response.topics.iteritems():
+            for name, topic_metadata in six.iteritems(response.topics):
                 if topic_metadata.err == LeaderNotAvailable.ERROR_CODE:
                     logger.warning("Leader not available.")
                     errored = True
-                for pid, partition_metadata in topic_metadata.partitions.iteritems():
+                for pid, partition_metadata in six.iteritems(topic_metadata.partitions):
                     if partition_metadata.err == LeaderNotAvailable.ERROR_CODE:
                         logger.warning("Leader not available.")
                         errored = True

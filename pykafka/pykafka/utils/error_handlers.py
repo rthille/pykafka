@@ -1,4 +1,6 @@
+from __future__ import absolute_import
 from collections import defaultdict
+import six
 
 
 def handle_partition_responses(response,
@@ -23,14 +25,14 @@ def handle_partition_responses(response,
 
     # group partition responses by error code
     parts_by_error = defaultdict(list)
-    for topic_name in response.topics.keys():
-        for partition_id, pres in response.topics[topic_name].iteritems():
+    for topic_name in list(response.topics.keys()):
+        for partition_id, pres in six.iteritems(response.topics[topic_name]):
             owned_partition = None
             if partitions_by_id is not None:
                 owned_partition = partitions_by_id[partition_id]
             parts_by_error[pres.error].append((owned_partition, pres))
 
-    for errcode, parts in parts_by_error.iteritems():
+    for errcode, parts in six.iteritems(parts_by_error):
         if errcode in error_handlers:
             error_handlers[errcode](parts)
 

@@ -83,8 +83,8 @@ class Producer(base.BaseProducer):
             """Get all the messages for the partitions from the request."""
             messages = itertools.chain.from_iterable(
                 mset.messages
-                for topic, partitions in req.msets.iteritems()
-                for p_id, mset in partitions.iteritems()
+                for topic, partitions in six.iteritems(req.msets)
+                for p_id, mset in six.iteritems(partitions)
                 if p_id == partition_id
             )
             for message in messages:
@@ -97,8 +97,8 @@ class Producer(base.BaseProducer):
 
             # Figure out if we need to retry any messages
             to_retry = []
-            for topic, partitions in response.topics.iteritems():
-                for partition, (error, offset) in partitions.iteritems():
+            for topic, partitions in six.iteritems(response.topics):
+                for partition, (error, offset) in six.iteritems(partitions):
                     if error == 0:
                         continue  # All's well
                     if error == UnknownTopicOrPartition.ERROR_CODE:
@@ -127,8 +127,8 @@ class Producer(base.BaseProducer):
             self._cluster.update()
             to_retry = [
                 ((message.partition_key, message.value), p_id)
-                for topic, partitions in req.msets.iteritems()
-                for p_id, mset in partitions.iteritems()
+                for topic, partitions in six.iteritems(req.msets)
+                for p_id, mset in six.iteritems(partitions)
                 for message in mset.messages
             ]
 

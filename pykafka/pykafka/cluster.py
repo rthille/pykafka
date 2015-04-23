@@ -10,6 +10,7 @@ from .broker import Broker
 from .topic import Topic
 from .protocol import ConsumerMetadataRequest, ConsumerMetadataResponse
 from pykafka.exceptions import ConsumerCoordinatorNotAvailable
+from six.moves import range
 
 
 logger = logging.getLogger(__name__)
@@ -146,7 +147,7 @@ class Cluster(object):
         broker = self.brokers[random.choice(list(self.brokers.keys()))]
         MAX_RETRIES = 3
 
-        for i in xrange(MAX_RETRIES):
+        for i in range(MAX_RETRIES):
             if i > 0:
                 logger.debug("Retrying")
             time.sleep(i)

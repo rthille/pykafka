@@ -258,7 +258,7 @@ class SimpleConsumer(base.BaseSimpleConsumer):
 
             # retry only the partitions that errored
             parts_by_error.pop(0)
-            errored_partitions = [op for err_group in parts_by_error.iteritems() for op in err_group]
+            errored_partitions = [op for err_group in six.iteritems(parts_by_error) for op in err_group]
             reqs = [p.build_offset_commit_request() for p in errored_partitions]
 
     def fetch_offsets(self):
@@ -276,16 +276,9 @@ class SimpleConsumer(base.BaseSimpleConsumer):
 
         log.info("Fetching offsets")
 
-        reqs = [p.build_offset_fetch_request() for p in list(self._partitions.keys())]
-        res = self._offset_manager.fetch_consumer_group_offsets(self._consumer_group, reqs)
-        parts_by_error = self._filter_partition_responses(res)
-        error_handlers = {0: lambda op, pres: op.set_offset(pres.offset)}
-        self._handle_partition_errors(parts_by_error, error_handlers)
-        self._reset_offsets(
-            [a[0] for a in
-             parts_by_error[OffsetOutOfRangeError.ERROR_CODE]])
+        reqs = [p.build_offset_fetch_request() for p in self._partitions.keys()]
 
-        for i in xrange(self._offsets_fetch_max_retries):
+        for i in range(self._offsets_fetch_max_retries):
             if i > 0:
                 log.debug("Retrying")
 
@@ -303,20 +296,6 @@ class SimpleConsumer(base.BaseSimpleConsumer):
             # retry only OffsetsLoadInProgress responses
             reqs = [p.build_offset_fetch_request()
                     for p in parts_by_error.get(OffsetsLoadInProgress.ERROR_CODE, [])]
-
-    def _handle_partition_errors(self, parts_by_error, handlers):
-        """Call the appropriate handler for each errored partition
-
-        :param parts_by_error: partition responses grouped by error code
-            (output of self._filter_partition_responses)
-        :type parts_by_error: dict {int: iterable}
-        :param handlers: mapping of error code to handler
-        :type handlers: dict {int: callable(owned_partition, partition_response)}
-        """
-        for errcode, parts in six.iteritems(parts_by_error):
-            for owned_partition, pres in parts:
-                if errcode in handlers:
-                    handlers[errcode](owned_partition, pres)
 
     def _reset_offsets(self, errored_partitions):
         """Reset offsets after an OffsetOutOfRangeError
