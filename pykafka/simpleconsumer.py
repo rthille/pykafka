@@ -210,8 +210,7 @@ class SimpleConsumer(base.BaseSimpleConsumer):
         def _handle_OffsetOutOfRangeError(parts):
             self.reset_offsets(
                 partitions=[(owned_partition, self._auto_offset_reset)
-                            for owned_partition, pres in parts],
-                flush=False
+                            for owned_partition, pres in parts]
             )
 
         def _handle_NotCoordinatorForConsumer(parts):
